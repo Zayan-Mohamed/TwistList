@@ -39,5 +39,5 @@ I have identified the following risks and planned mitigations to satisfy the 20%
     * **Helmet:** HTTP header hardening.
 
 ## 4. Novelty Feature Plan
-**"AI-Assisted Task Breakdown"**
+- **"AI-Assisted Task Breakdown"**  
 I plan to implement an optional feature where users can input a vague task (e.g., "Move house"), and the system will use an LLM API to suggest sub-tasks (e.g., "Hire movers," "Pack kitchen," "Change address"), adding significant UX value.

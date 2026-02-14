@@ -1,98 +1,294 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# TwistList Server - Secure Task Management API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A robust, scalable, and secure Task Management System built with NestJS, featuring enterprise-grade security practices and comprehensive API documentation.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Security Features
 
-## Description
+- **Argon2 Password Hashing**: Industry-standard password security
+- **JWT Authentication**: Secure token-based authentication with 15-minute expiration
+- **IDOR Prevention**: All endpoints verify user ownership of resources
+- **Rate Limiting**: Throttler guards to prevent brute-force attacks
+- **Input Validation**: Strict validation using `class-validator` with whitelist and forbidNonWhitelisted enabled
+- **Helmet Security**: Content Security Policy and other HTTP headers protection
+- **Response Sanitization**: DTOs exclude sensitive data like passwords
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Tech Stack
 
-## Project setup
+- **Framework**: NestJS v10+ with Fastify Adapter
+- **Language**: TypeScript (Strict mode)
+- **Database**: PostgreSQL
+- **ORM**: Prisma
+- **Authentication**: Passport JWT
+- **Documentation**: Swagger/OpenAPI
+- **Security**: Argon2, Helmet, Throttler
+
+## Prerequisites
+
+- Node.js (v18+)
+- pnpm (v8+)
+- PostgreSQL (v14+)
+
+## Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone <repository-url>
+   cd TwistList/server
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   pnpm install
+   ```
+
+3. **Setup environment variables**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edit `.env` with your configuration:
+
+   ```env
+   DATABASE_URL="postgresql://user:password@localhost:5432/twistlist"
+   JWT_SECRET="your-super-secret-jwt-key"
+   PORT=3000
+   CORS_ORIGIN="http://localhost:3001"
+   ```
+
+4. **Run database migrations**
+
+   ```bash
+   pnpm prisma migrate deploy
+   ```
+
+5. **Generate Prisma Client**
+   ```bash
+   pnpm prisma generate
+   ```
+
+## Running the Application
+
+### Development
 
 ```bash
-$ pnpm install
+pnpm start:dev
 ```
 
-## Compile and run the project
+### Production
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+pnpm build
+pnpm start:prod
 ```
 
-## Run tests
+### Testing
 
 ```bash
-# unit tests
-$ pnpm run test
+# Unit tests
+pnpm test
 
-# e2e tests
-$ pnpm run test:e2e
+# E2E tests
+pnpm test:e2e
 
-# test coverage
-$ pnpm run test:cov
+# Test coverage
+pnpm test:cov
 ```
 
-## Deployment
+## API Documentation
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Once the application is running, access the interactive Swagger documentation at:
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+```
+http://localhost:3000/api
+```
+
+## Authentication
+
+### Register a New User
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+POST /auth/signup
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "username": "john_doe",
+  "password": "SecurePassword123!"
+}
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Sign In
 
-## Resources
+```bash
+POST /auth/signin
+Content-Type: application/json
 
-Check out a few resources that may come in handy when working with NestJS:
+{
+  "emailOrUsername": "user@example.com",
+  "password": "SecurePassword123!"
+}
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Response:
 
-## Support
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Using the JWT Token
 
-## Stay in touch
+Include the token in the Authorization header for all protected endpoints:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+Authorization: Bearer <your_access_token>
+```
+
+## API Endpoints
+
+### Authentication
+
+- `POST /auth/signup` - Register a new user
+- `POST /auth/signin` - Sign in
+
+### User Profile
+
+- `GET /users/profile` - Get current user profile
+- `PATCH /users/profile` - Update profile
+- `DELETE /users/account` - Delete account
+
+### Tasks
+
+- `POST /tasks` - Create a task (author set automatically from JWT)
+- `GET /tasks` - Get all user's tasks (author or assignee)
+- `GET /tasks/:id` - Get specific task (with IDOR protection)
+- `PATCH /tasks/:id` - Update task (author or assignee only)
+- `DELETE /tasks/:id` - Delete task (author only)
+
+### Projects
+
+- `POST /projects` - Create a project
+- `GET /projects` - Get all user's projects (via team membership)
+- `GET /projects/:id` - Get specific project
+- `PATCH /projects/:id` - Update project
+- `DELETE /projects/:id` - Delete project
+
+### Teams
+
+- `POST /teams` - Create a team
+- `GET /teams` - Get user's teams
+- `GET /teams/:id` - Get specific team
+- `PATCH /teams/:id` - Update team
+- `DELETE /teams/:id` - Delete team
+
+## Architecture
+
+### Security Architecture
+
+```
+┌─────────────────────────────────────┐
+│   Global Validation Pipe            │
+│   - Whitelist: true                 │
+│   - ForbidNonWhitelisted: true      │
+└─────────────────────────────────────┘
+             ↓
+┌─────────────────────────────────────┐
+│   Throttler Guard (Rate Limiting)   │
+│   - 10 requests per 60 seconds      │
+└─────────────────────────────────────┘
+             ↓
+┌─────────────────────────────────────┐
+│   JWT Guard (Protected Routes)      │
+│   - JWT Strategy                    │
+│   - User Validation                 │
+└─────────────────────────────────────┘
+             ↓
+┌─────────────────────────────────────┐
+│   Service Layer (Business Logic)    │
+│   - IDOR Prevention                 │
+│   - Authorization Checks            │
+└─────────────────────────────────────┘
+             ↓
+┌─────────────────────────────────────┐
+│   Response DTOs                     │
+│   - Password exclusion              │
+│   - Data sanitization               │
+└─────────────────────────────────────┘
+```
+
+### Module Structure
+
+```
+src/
+├── auth/              # Authentication module
+│   ├── decorator/     # Custom decorators (GetUser)
+│   ├── dto/           # DTOs and response models
+│   ├── guard/         # JWT Guard
+│   └── strategy/      # JWT Strategy
+├── tasks/             # Task management
+├── projects/          # Project management
+├── teams/             # Team management
+├── users/             # User profile management
+└── prisma/            # Database service
+```
+
+## Security Best Practices Implemented
+
+1. **IDOR Prevention**: Every endpoint verifies user ownership
+
+   ```typescript
+   if (task.authorUserId !== userId && task.assignedUserId !== userId) {
+     throw new ForbiddenException('You do not have permission');
+   }
+   ```
+
+2. **Password Security**: Argon2 hashing
+
+   ```typescript
+   const hash = await argon.hash(dto.password);
+   ```
+
+3. **Input Validation**: Strict DTOs
+
+   ```typescript
+   @IsString()
+   @IsNotEmpty()
+   @MinLength(8)
+   password: string;
+   ```
+
+4. **Rate Limiting**: Throttler on auth endpoints
+
+   ```typescript
+   @Throttle({ default: { limit: 3, ttl: 60000 } })
+   ```
+
+5. **Response Sanitization**: Exclude sensitive data
+   ```typescript
+   @Exclude()
+   password: string;
+   ```
+
+## Database Schema
+
+See [prisma/schema.prisma](./prisma/schema.prisma) for the complete data model.
+
+Key entities:
+
+- **User**: Authentication and profile
+- **Task**: Task management with author and assignee
+- **Project**: Project organization
+- **Team**: Team collaboration
+- **ProjectTeam**: Many-to-many relationship
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+MIT
+
+## 👥 Support
+
+For issues or questions, please open an issue on GitHub.
