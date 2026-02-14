@@ -7,12 +7,18 @@ import {
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from '@fastify/helmet';
+import cookie from '@fastify/cookie';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
   );
+
+  // Register cookie plugin
+  await app.register(cookie, {
+    secret: process.env.COOKIE_SECRET || 'cookie-secret-key',
+  });
 
   // Security: Enable Helmet
   await app.register(helmet, {

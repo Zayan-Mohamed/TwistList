@@ -1,8 +1,16 @@
-import { Body, Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  HttpCode,
+  HttpStatus,
+  Res,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { SignUpDto, SignInDto } from './dto/auth.dto';
+import type { FastifyReply } from 'fastify';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -18,13 +26,24 @@ export class AuthController {
     description: 'User successfully registered',
     schema: {
       example: {
-        access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        message: 'User successfully registered',
       },
     },
   })
   @ApiResponse({ status: 403, description: 'Credentials already taken' })
-  signup(@Body() dto: SignUpDto) {
-    return this.authService.signup(dto);
+  async signup(@Body() dto: SignUpDto, @Res() reply: FastifyReply) {
+    const result = await this.authService.signup(dto);
+
+    // Set httpOnly cookie
+    reply.setCookie('auth_token', result.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 86400000, // 24 hours
+      path: '/',
+    });
+
+    return reply.send({ message: 'User successfully registered' });
   }
 
   @Post('signin')
@@ -41,7 +60,39 @@ export class AuthController {
     },
   })
   @ApiResponse({ status: 403, description: 'Credentials incorrect' })
-  signin(@Body() dto: SignInDto) {
-    return this.authService.signin(dto);
+  async signin(@Body() dto: SignInDto, @Res() reply: FastifyReply) {
+    const result = await this.authService.signin(dto);
+
+    // Set httpOnly cookie
+    reply.setCookie('auth_token', result.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 86400000, // 24 hours
+      path: '/',
+    });
+
+    // Still return access_token in response for compatibility
+    return reply.send({ access_token: result.access_token });
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Logout user' })
+  @ApiResponse({
+    status: 200,
+    description: 'User successfully logged out',
+  })
+  async logout(@Res() reply: FastifyReply) {
+    // Clear the httpOnly cookie
+    reply.setCookie('auth_token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/',
+    });
+
+    return reply.send({ message: 'Logged out successfully' });
   }
 }
