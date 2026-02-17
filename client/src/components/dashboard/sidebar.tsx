@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, CheckSquare, LayoutDashboard, Settings, User as UserIcon, LogOut, Plus, Menu } from "lucide-react";
+import { Bell, CheckSquare, LayoutDashboard, Settings, User as UserIcon, LogOut, Plus, Menu, Briefcase, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -15,24 +15,31 @@ import {
 } from "@/components/ui/tooltip";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useUser } from "@/lib/hooks";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const { data: user, isLoading } = useUser();
 
   const handleLogout = async () => {
     try {
       // Clear cookies and redirect
       document.cookie = "auth_token=; path=/; max-age=0; SameSite=Lax";
-      // Also try backend logout if available
-      // await authApi.logout(); 
-      router.push("/login");
+      
+      // Try backend logout
+      await authApi.logout(); 
+
+      // Redirect with force clear
+      window.location.href = "/login?error=unauthorized";
       toast.success("Logged out successfully");
     } catch (error) {
       console.error("Logout failed", error);
       document.cookie = "auth_token=; path=/; max-age=0; SameSite=Lax";
-      router.push("/login");
+      window.location.href = "/login?error=unauthorized";
     }
   };
 
@@ -46,6 +53,16 @@ export function Sidebar() {
       href: "/tasks",
       label: "My Tasks",
       icon: CheckSquare,
+    },
+    {
+      href: "/projects",
+      label: "Projects",
+      icon: Briefcase,
+    },
+    {
+      href: "/teams",
+      label: "Teams",
+      icon: Users,
     },
     {
       href: "/profile",
@@ -99,24 +116,32 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Actions */}
+      {/* User & Logout */}
       <div className="space-y-4 px-4 mt-auto">
-        <div className="bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-             <div className="flex items-center gap-3 mb-3">
-                <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                    <span className="text-xs font-bold">PRO</span>
-                </div>
-                <div>
-                    <h4 className="text-sm font-semibold">Upgrade to Pro</h4>
-                    <p className="text-xs text-muted-foreground">Get more features</p>
-                </div>
-             </div>
-             <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
-                Upgrade Now
-             </Button>
+        <div className="bg-gray-50/50 dark:bg-gray-900/50 rounded-xl p-3 border border-gray-100 dark:border-gray-800">
+             {isLoading ? (
+               <div className="flex items-center gap-3">
+                 <Skeleton className="h-10 w-10 rounded-full" />
+                 <div className="space-y-2">
+                   <Skeleton className="h-3 w-20" />
+                   <Skeleton className="h-3 w-24" />
+                 </div>
+               </div>
+             ) : user ? (
+               <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10 border-2 border-white dark:border-gray-800 shadow-sm">
+                    <AvatarImage src={user.profilePictureUrl} />
+                    <AvatarFallback className="bg-blue-100 text-blue-600 font-bold">
+                      {user.username?.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate text-gray-900 dark:text-gray-100">{user.username}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                  </div>
+               </div>
+             ) : null}
         </div>
-
-        <div className="h-px bg-gray-200 dark:bg-gray-800 my-4" />
 
         <button
           onClick={handleLogout}
