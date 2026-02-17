@@ -21,7 +21,7 @@ export function Sidebar() {
   const handleLogout = async () => {
     try {
       // Clear cookies and redirect
-      document.cookie = "auth_token=; path=/; max-age=0; SameSite=none";
+      document.cookie = "auth_token=; path=/; max-age=0; SameSite=None";
       
       // Try backend logout
       await authApi.logout(); 
@@ -31,7 +31,7 @@ export function Sidebar() {
       toast.success("Logged out successfully");
     } catch (error) {
       console.error("Logout failed", error);
-      document.cookie = "auth_token=; path=/; max-age=0; SameSite=none";
+      document.cookie = "auth_token=; path=/; max-age=0; SameSite=None";
       window.location.href = "/login?error=unauthorized";
     }
   };

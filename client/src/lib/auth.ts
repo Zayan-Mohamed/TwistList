@@ -6,6 +6,6 @@ export function isAuthenticated(): boolean {
 export function clearAuthToken(): void {
 
   if (typeof window !== "undefined") {
-    document.cookie = "auth_token=; path=/; max-age=0; SameSite=none";
+    document.cookie = "auth_token=; path=/; max-age=0; SameSite=None";
   }
 }

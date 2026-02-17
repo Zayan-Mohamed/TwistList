@@ -37,10 +37,11 @@ export class AuthController {
     // Set httpOnly cookie for cross-domain authentication
     reply.setCookie('auth_token', result.access_token, {
       httpOnly: true,
-      secure: true, // Required when sameSite is 'none'
-      sameSite: 'none', // Required for cross-domain (Vercel to Railway)
-      maxAge: 86400000, // 24 hours
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 86400000,
       path: '/',
+      domain: process.env.COOKIE_DOMAIN || undefined,
     });
 
     return reply.send({ message: 'User successfully registered' });
@@ -66,10 +67,11 @@ export class AuthController {
     // Set httpOnly cookie for cross-domain authentication
     reply.setCookie('auth_token', result.access_token, {
       httpOnly: true,
-      secure: true, // Required when sameSite is 'none'
-      sameSite: 'none', // Required for cross-domain (Vercel to Railway)
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 86400000, // 24 hours
       path: '/',
+      domain: process.env.COOKIE_DOMAIN || undefined,
     });
 
     // Still return access_token in response for compatibility
@@ -87,10 +89,11 @@ export class AuthController {
     // Clear the httpOnly cookie
     reply.setCookie('auth_token', '', {
       httpOnly: true,
-      secure: true, // Required when sameSite is 'none'
-      sameSite: 'none', // Required for cross-domain (Vercel to Railway)
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 0,
       path: '/',
+      domain: process.env.COOKIE_DOMAIN || undefined,
     });
 
     return reply.send({ message: 'Logged out successfully' });
