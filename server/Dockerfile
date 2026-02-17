@@ -12,7 +12,7 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-RUN pnpm dlx prisma generate
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm dlx prisma generate
 RUN pnpm run build
 
 EXPOSE 8000
