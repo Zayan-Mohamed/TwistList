@@ -17,6 +17,12 @@ export function proxy(request: NextRequest) {
 
   // If trying to access auth pages with valid token, redirect to dashboard
   if (isAuthPage && token) {
+     if (request.nextUrl.searchParams.get("error") === "unauthorized") {
+         const response = NextResponse.next();
+         response.cookies.delete("auth_token");
+         return response;
+     }
+
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTeamDto } from './dto/create-team.dto';
@@ -17,19 +18,24 @@ export class TeamsService {
     userId: number,
     createTeamDto: CreateTeamDto,
   ): Promise<TeamResponseDto> {
-    // Create team (user becomes implicit owner)
-    const team = await this.prisma.team.create({
-      data: {
-        teamName: createTeamDto.teamName,
-        productOwnerUserId: createTeamDto.productOwnerUserId,
-        projectManagerUserId: createTeamDto.projectManagerUserId,
-      },
-    });
+    // Create team and assign creator to it
+    // Using transaction to ensure atomicity
+    const team = await this.prisma.$transaction(async (tx) => {
+        const newTeam = await tx.team.create({
+            data: {
+                teamName: createTeamDto.teamName,
+                productOwnerUserId: createTeamDto.productOwnerUserId,
+                projectManagerUserId: createTeamDto.projectManagerUserId,
+            },
+        });
 
-    // Assign creator to the team
-    await this.prisma.user.update({
-      where: { userId },
-      data: { teamId: team.id },
+        // Assign creator to the team
+        await tx.user.update({
+            where: { userId },
+            data: { teamId: newTeam.id },
+        });
+
+        return newTeam;
     });
 
     return plainToInstance(TeamResponseDto, team, {
@@ -38,30 +44,20 @@ export class TeamsService {
   }
 
   async findAll(userId: number): Promise<TeamResponseDto[]> {
-    // Get user to find their teamId
-    const user = await this.prisma.user.findUnique({
-      where: { userId },
-      select: { teamId: true },
+    // Return all teams with their pending requests
+    const teams = await this.prisma.team.findMany({
+      include: {
+        user: true,
+        teamRequests: {
+            where: { status: 'PENDING' },
+            include: { user: true }
+        }
+      },
     });
 
-    if (!user?.teamId) {
-      return [];
-    }
-
-    // Return user's team
-    const team = await this.prisma.team.findUnique({
-      where: { id: user.teamId },
+    return plainToInstance(TeamResponseDto, teams, {
+      excludeExtraneousValues: true,
     });
-
-    if (!team) {
-      return [];
-    }
-
-    return [
-      plainToInstance(TeamResponseDto, team, {
-        excludeExtraneousValues: true,
-      }),
-    ];
   }
 
   async findOne(userId: number, teamId: number): Promise<TeamResponseDto> {
@@ -86,6 +82,73 @@ export class TeamsService {
     return plainToInstance(TeamResponseDto, team, {
       excludeExtraneousValues: true,
     });
+  }
+
+  async addMember(
+    currentUserId: number,
+    teamId: number,
+    usernameToAdd: string,
+  ): Promise<{ message: string }> {
+    // 1. Check if the current user has access to modify this team (e.g., is a member)
+    const team = await this.prisma.team.findUnique({
+      where: { id: teamId },
+      include: { user: true },
+    });
+
+    if (!team) {
+      throw new NotFoundException('Team not found');
+    }
+
+    const isMember = team.user.some((u) => u.userId === currentUserId);
+    if (!isMember) {
+      throw new ForbiddenException('You are not a member of this team');
+    }
+
+    // 2. Find the user to add
+    const userToAdd = await this.prisma.user.findUnique({
+      where: { username: usernameToAdd },
+    });
+
+    if (!userToAdd) {
+      throw new NotFoundException(`User '${usernameToAdd}' not found`);
+    }
+
+    // 3. Check if user is already in a team (assuming 1 team per user for now based on schema)
+    if (userToAdd.teamId) {
+       if (userToAdd.teamId === teamId) {
+           return { message: 'User is already in this team' };
+       }
+       throw new BadRequestException('User is already in another team');
+    }
+
+    // 4. Add user to team
+    await this.prisma.user.update({
+      where: { userId: userToAdd.userId },
+      data: { teamId: teamId },
+    });
+
+    return { message: 'Member added successfully' };
+  }
+
+  async leaveTeam(userId: number): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { userId },
+    });
+
+    if (!user) {
+        throw new NotFoundException('User not found');
+    }
+
+    if (!user.teamId) {
+        return { message: 'User is not in any team' };
+    }
+
+    await this.prisma.user.update({
+        where: { userId },
+        data: { teamId: null },
+    });
+
+    return { message: 'Left team successfully' };
   }
 
   async update(
@@ -145,5 +208,146 @@ export class TeamsService {
     });
 
     return { message: 'Team deleted successfully' };
+  }
+
+  async requestJoin(userId: number, teamId: number): Promise<{ message: string }> {
+    const team = await this.prisma.team.findUnique({
+      where: { id: teamId },
+      include: { user: true },
+    });
+
+    if (!team) {
+      throw new NotFoundException('Team not found');
+    }
+
+    const userInTeam = team.user.some((u) => u.userId === userId);
+    if (userInTeam) {
+      throw new BadRequestException('You are already in this team');
+    }
+
+    // Check for existing request using the unique constraint
+    const existingRequest = await this.prisma.teamRequest.findUnique({
+        where: {
+            teamId_userId: {
+                teamId: teamId,
+                userId: userId
+            }
+        }
+    });
+
+    if (existingRequest) {
+        if (existingRequest.status === 'PENDING') {
+             throw new BadRequestException('You already have a pending request for this team');
+        } else if (existingRequest.status === 'REJECTED') {
+            // Re-open request
+            await this.prisma.teamRequest.update({
+                where: { id: existingRequest.id },
+                data: { status: 'PENDING' }
+            });
+             return { message: 'Join request sent successfully' };
+        } else if (existingRequest.status === 'APPROVED') {
+             throw new BadRequestException('You have already been approved for this team');
+        }
+    }
+
+    // Create new request if none exists
+    await this.prisma.teamRequest.create({
+      data: {
+        teamId,
+        userId,
+        status: 'PENDING',
+      },
+    });
+
+    return { message: 'Join request sent successfully' };
+  }
+
+  async acceptRequest(userId: number, teamId: number, requestId: number): Promise<{ message: string }> {
+      // 1. Verify requester has permission (must be team member)
+      const team = await this.prisma.team.findUnique({
+          where: { id: teamId },
+          include: { user: true }
+      });
+
+      if (!team) {
+          throw new NotFoundException('Team not found');
+      }
+
+      const isMember = team.user.some(u => u.userId === userId);
+      if (!isMember) {
+          throw new ForbiddenException('You do not have permission to accept requests for this team');
+      }
+
+      // 2. Find request
+      const request = await this.prisma.teamRequest.findUnique({
+          where: { id: requestId },
+      });
+
+      if (!request) {
+          throw new NotFoundException('Request not found');
+      }
+      if (request.teamId !== teamId) {
+          throw new BadRequestException('Request does not belong to this team');
+      }
+      if (request.status !== 'PENDING') {
+          throw new BadRequestException('Request is not pending');
+      }
+
+      // 3. Add user to team and update request status
+      await this.prisma.$transaction(async (tx) => {
+          // Add user to team
+          await tx.user.update({
+              where: { userId: request.userId },
+              data: { teamId: teamId }
+          });
+
+          // Update request status
+          await tx.teamRequest.update({
+              where: { id: requestId },
+              data: { status: 'APPROVED' }
+          });
+      });
+
+      return { message: 'Request accepted successfully' };
+  }
+
+  async rejectRequest(userId: number, teamId: number, requestId: number): Promise<{ message: string }> {
+      // 1. Verify requester has permission
+      const team = await this.prisma.team.findUnique({
+          where: { id: teamId },
+          include: { user: true }
+      });
+
+      if (!team) {
+          throw new NotFoundException('Team not found');
+      }
+
+      const isMember = team.user.some(u => u.userId === userId);
+      if (!isMember) {
+          throw new ForbiddenException('You do not have permission to reject requests for this team');
+      }
+
+      // 2. Find request
+      const request = await this.prisma.teamRequest.findUnique({
+          where: { id: requestId },
+      });
+
+      if (!request) {
+          throw new NotFoundException('Request not found');
+      }
+      if (request.teamId !== teamId) {
+          throw new BadRequestException('Request does not belong to this team');
+      }
+      if (request.status !== 'PENDING') {
+          throw new BadRequestException('Request is not pending');
+      }
+
+      // 3. Update request status
+      await this.prisma.teamRequest.update({
+          where: { id: requestId },
+          data: { status: 'REJECTED' }
+      });
+
+      return { message: 'Request rejected successfully' };
   }
 }

@@ -42,6 +42,10 @@ export class TaskResponseDto {
 
   @ApiProperty()
   @Expose()
+  position: number;
+
+  @ApiProperty()
+  @Expose()
   projectId: number;
 
   @ApiProperty()

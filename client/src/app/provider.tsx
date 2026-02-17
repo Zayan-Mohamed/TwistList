@@ -14,7 +14,7 @@ export function Provider({ children }: { children: React.ReactNode }) {
             staleTime: 60 * 1000, // 1 minute
             gcTime: 1000 * 60 * 60,
             retry: 1,
-            refetchOnWindowFocus: false, // Prevent aggressive refetching
+            refetchOnWindowFocus: false, 
           },
         },
       }),

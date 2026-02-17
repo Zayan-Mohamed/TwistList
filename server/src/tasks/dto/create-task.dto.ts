@@ -38,17 +38,22 @@ export class CreateTaskDto {
   @ApiProperty({ required: false })
   @IsDateString()
   @IsOptional()
-  startDate?: Date;
+  startDate?: string;
 
   @ApiProperty({ required: false })
   @IsDateString()
   @IsOptional()
-  dueDate?: Date;
+  dueDate?: string;
 
   @ApiProperty({ required: false })
   @IsInt()
   @IsOptional()
   points?: number;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  position?: number;
 
   @ApiProperty()
   @IsInt()

@@ -18,43 +18,42 @@ export class ProjectsService {
     userId: number,
     createProjectDto: CreateProjectDto,
   ): Promise<ProjectResponseDto> {
-    // Create project and optionally link to a team
+    // Get user's current team
+    const user = await this.prisma.user.findUnique({
+      where: { userId },
+      select: { teamId: true },
+    });
+
+    const teamIdToUse = createProjectDto.teamId || user?.teamId;
+
+    if (!teamIdToUse) {
+      throw new BadRequestException(
+        'You must belong to a team or specify a team ID to create a project. Please create a team first.',
+      );
+    }
+
+    // Create project and link to team
     const project = await this.prisma.$transaction(async (tx) => {
       const newProject = await tx.project.create({
         data: {
           name: createProjectDto.name,
           description: createProjectDto.description,
-          startDate: createProjectDto.startDate,
-          endDate: createProjectDto.endDate,
+          startDate: createProjectDto.startDate
+            ? new Date(createProjectDto.startDate)
+            : undefined,
+          endDate: createProjectDto.endDate
+            ? new Date(createProjectDto.endDate)
+            : undefined,
         },
       });
 
-      // If teamId is provided, link the team to the project
-      if (createProjectDto.teamId) {
-        // Verify the team exists
-        const team = await tx.team.findUnique({
-          where: { id: createProjectDto.teamId },
-          include: { user: true },
-        });
-
-        if (!team) {
-          throw new BadRequestException('Team not found');
-        }
-
-        // Verify user is in the team
-        const userInTeam = team.user.some((u) => u.userId === userId);
-        if (!userInTeam) {
-          throw new ForbiddenException('You are not a member of this team');
-        }
-
-        // Link team to project
-        await tx.projectTeam.create({
-          data: {
-            teamId: createProjectDto.teamId,
-            projectId: newProject.id,
-          },
-        });
-      }
+      // Link team to project
+      await tx.projectTeam.create({
+        data: {
+          teamId: teamIdToUse,
+          projectId: newProject.id,
+        },
+      });
 
       return newProject;
     });
@@ -140,8 +139,12 @@ export class ProjectsService {
       data: {
         name: updateProjectDto.name,
         description: updateProjectDto.description,
-        startDate: updateProjectDto.startDate,
-        endDate: updateProjectDto.endDate,
+        startDate: updateProjectDto.startDate
+          ? new Date(updateProjectDto.startDate)
+          : undefined,
+        endDate: updateProjectDto.endDate
+          ? new Date(updateProjectDto.endDate)
+          : undefined,
       },
     });
 

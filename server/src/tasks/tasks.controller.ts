@@ -74,6 +74,16 @@ export class TasksController {
     );
   }
 
+  @Patch('reorder')
+  @ApiOperation({ summary: 'Reorder tasks' })
+  @ApiResponse({ status: 200, description: 'Tasks reordered' })
+  async reorder(
+    @GetUser('userId') userId: number,
+    @Body() body: { positions: { id: number; position: number }[] },
+  ): Promise<void> {
+    return this.tasksService.updatePositions(userId, body.positions);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a specific task by ID' })
   @ApiParam({ name: 'id', description: 'Task ID' })

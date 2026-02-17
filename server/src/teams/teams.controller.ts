@@ -78,6 +78,39 @@ export class TeamsController {
     return this.teamsService.findOne(userId, id);
   }
 
+  @Post(':id/members')
+  @ApiOperation({ summary: 'Add a user to the team' })
+  @ApiParam({ name: 'id', description: 'Team ID' })
+  @ApiResponse({
+    status: 201,
+    description: 'Member added successfully',
+    schema: { example: { message: 'Member added successfully' } },
+  })
+  @ApiResponse({ status: 404, description: 'User or Team not found' })
+  @ApiResponse({ status: 400, description: 'User already in a team' })
+  addMember(
+    @GetUser('userId') userId: number,
+    @Param('id', ParseIntPipe) teamId: number,
+    @Body() body: { username: string }, // Updated to use object
+  ): Promise<{ message: string }> {
+    return this.teamsService.addMember(userId, teamId, body.username);
+  }
+
+  @Post('leave')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Leave the current team' })
+  @ApiResponse({
+    status: 200,
+    description: 'Left team successfully',
+    schema: { example: { message: 'Left team successfully' } },
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  leaveTeam(
+    @GetUser('userId') userId: number,
+  ): Promise<{ message: string }> {
+    return this.teamsService.leaveTeam(userId);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update a team' })
   @ApiParam({ name: 'id', description: 'Team ID' })
@@ -114,5 +147,47 @@ export class TeamsController {
     @Param('id', ParseIntPipe) id: number,
   ): Promise<{ message: string }> {
     return this.teamsService.remove(userId, id);
+  }
+
+  @Post(':id/join')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request to join a team' })
+  @ApiParam({ name: 'id', description: 'Team ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Join request sent successfully',
+    schema: { example: { message: 'Join request sent successfully' } },
+  })
+  requestJoin(
+    @GetUser('userId') userId: number,
+    @Param('id', ParseIntPipe) teamId: number,
+  ): Promise<{ message: string }> {
+    return this.teamsService.requestJoin(userId, teamId);
+  }
+
+  @Post(':id/requests/:requestId/accept')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Accept a join request' })
+  @ApiParam({ name: 'id', description: 'Team ID' })
+  @ApiParam({ name: 'requestId', description: 'Request ID' })
+  acceptRequest(
+    @GetUser('userId') userId: number,
+    @Param('id', ParseIntPipe) teamId: number,
+    @Param('requestId', ParseIntPipe) requestId: number,
+  ): Promise<{ message: string }> {
+    return this.teamsService.acceptRequest(userId, teamId, requestId);
+  }
+
+  @Post(':id/requests/:requestId/reject')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reject a join request' })
+  @ApiParam({ name: 'id', description: 'Team ID' })
+  @ApiParam({ name: 'requestId', description: 'Request ID' })
+  rejectRequest(
+    @GetUser('userId') userId: number,
+    @Param('id', ParseIntPipe) teamId: number,
+    @Param('requestId', ParseIntPipe) requestId: number,
+  ): Promise<{ message: string }> {
+    return this.teamsService.rejectRequest(userId, teamId, requestId);
   }
 }

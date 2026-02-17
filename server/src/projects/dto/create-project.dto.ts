@@ -24,12 +24,12 @@ export class CreateProjectDto {
   @ApiProperty({ required: false })
   @IsDateString()
   @IsOptional()
-  startDate?: Date;
+  startDate?: string;
 
   @ApiProperty({ required: false })
   @IsDateString()
   @IsOptional()
-  endDate?: Date;
+  endDate?: string;
 
   @ApiProperty({
     required: false,

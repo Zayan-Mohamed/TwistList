@@ -24,6 +24,7 @@ export interface Task {
   startDate?: string;
   dueDate?: string;
   points?: number;
+  position?: number;
   projectId: number;
   authorUserId: number;
   assignedUserId?: number;
@@ -37,6 +38,30 @@ export interface Project {
   description?: string;
   startDate?: string;
   endDate?: string;
+}
+
+export enum RequestStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+export interface TeamRequest {
+  id: number;
+  teamId: number;
+  userId: number;
+  status: RequestStatus;
+  createdAt: string;
+  user: User;
+}
+
+export interface Team {
+  id: number;
+  teamName: string;
+  productOwnerUserId?: number;
+  projectManagerUserId?: number;
+  users?: User[];
+  requests?: TeamRequest[];
 }
 
 export interface AuthResponse {

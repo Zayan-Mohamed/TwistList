@@ -39,9 +39,16 @@ export class TasksService {
     }
 
     // 3. Create the task with authorUserId from JWT
+    const lastTask = await this.prisma.task.findFirst({
+      where: { projectId: createTaskDto.projectId },
+      orderBy: { position: 'desc' },
+    });
+    const position = (lastTask?.position ?? 0) + 1;
+
     const task = await this.prisma.task.create({
       data: {
         ...createTaskDto,
+        position,
         authorUserId: userId,
       },
       include: {
@@ -53,6 +60,20 @@ export class TasksService {
     return plainToInstance(TaskResponseDto, task, {
       excludeExtraneousValues: true,
     });
+  }
+
+  async updatePositions(
+    userId: number,
+    positions: { id: number; position: number }[],
+  ): Promise<void> {
+    await this.prisma.$transaction(
+      positions.map((p) =>
+        this.prisma.task.update({
+          where: { id: p.id },
+          data: { position: p.position },
+        }),
+      ),
+    );
   }
 
   async findAll(
@@ -72,6 +93,9 @@ export class TasksService {
       include: {
         author: true,
         assignee: true,
+      },
+      orderBy: {
+        position: 'asc',
       },
     });
 

@@ -20,6 +20,7 @@ model User {
   taskAssignments TaskAssignment[]
   attachments     Attachment[]
   comments        Comment[]
+  teamRequests    TeamRequest[]
   team            Team?            @relation(fields: [teamId], references: [id])
 }
 
@@ -30,6 +31,7 @@ model Team {
   projectManagerUserId Int?
   projectTeams         ProjectTeam[]
   user                 User[]
+  teamRequests         TeamRequest[]
 }
 
 model Project {
@@ -60,6 +62,7 @@ model Task {
   startDate      DateTime?
   dueDate        DateTime?
   points         Int?
+  position       Int       @default(0)
   projectId      Int
   authorUserId   Int
   assignedUserId Int?
@@ -102,8 +105,27 @@ model Comment {
   user User @relation(fields: [userId], references: [userId])
 }
 
+model TeamRequest {
+  id        Int      @id @default(autoincrement())
+  teamId    Int
+  userId    Int
+  status    RequestStatus @default(PENDING)
+  createdAt DateTime @default(now())
+
+  team      Team     @relation(fields: [teamId], references: [id])
+  user      User     @relation(fields: [userId], references: [userId])
+
+  @@unique([teamId, userId])
+}
+
 enum TaskStatus {
   PENDING
   IN_PROGRESS
   COMPLETED
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

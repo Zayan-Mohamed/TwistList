@@ -1,15 +1,34 @@
 "use client";
 
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
-import { useTasks } from "@/lib/hooks";
+import { useTasks, useReorderTasks } from "@/lib/hooks";
 import { TaskCard } from "@/components/task-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Plus, NotebookText } from "lucide-react";
+import { Plus, NotebookText, Search } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { Input } from "@/components/ui/input";
+import { CreateTaskDialog } from "@/components/create-task-dialog";
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string | "ALL">("ALL");
 
   useEffect(() => {
     // Defer state update to next tick to avoid synchronous setState warning
@@ -18,9 +37,47 @@ export default function DashboardPage() {
   }, []);
 
   const { data: tasks, isLoading, isError } = useTasks();
+  const reorderMutation = useReorderTasks();
 
-  // Prevent hydration mismatch by not rendering until mounted
+  const filteredTasks = tasks?.filter((t) => {
+    const matchesSearch =
+      t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "ALL" ? true : t.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (searchTerm || statusFilter !== "ALL") return;
+
+    if (active.id !== over?.id && tasks) {
+      const oldIndex = tasks.findIndex((t) => t.id === active.id);
+      const newIndex = tasks.findIndex((t) => t.id === over?.id);
+
+      const newTasks = arrayMove(tasks, oldIndex, newIndex);
+
+      const updates = newTasks.map((t, index) => ({
+        id: t.id,
+        position: index,
+      }));
+
+      reorderMutation.mutate(updates);
+    }
+  };
+  
+  const isDragEnabled = !searchTerm && statusFilter === "ALL";
+
   if (!mounted) {
+
     return (
       <DashboardLayout>
         <div className="container mx-auto">
@@ -102,14 +159,7 @@ export default function DashboardPage() {
             </p>
             </motion.div>
             
-            <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-linear-to-r from-blue-600 to-purple-600 text-white font-medium shadow-lg hover:shadow-blue-500/30 transition-all"
-            >
-                <Plus className="h-5 w-5" />
-                New Task
-            </motion.button>
+            <CreateTaskDialog />
         </div>
 
         {/* Stats Cards */}
@@ -146,29 +196,65 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
+        {/* Search and Filters */}
+        <div className="flex flex-col md:flex-row gap-4 mb-8 bg-white/50 dark:bg-black/50 p-4 rounded-xl backdrop-blur-sm border border-gray-100 dark:border-gray-800">
+           <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search tasks..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 bg-white dark:bg-black/50"
+              />
+           </div>
+           <select
+             className="px-4 py-2 rounded-lg border bg-white dark:bg-black/50 text-sm focus:ring-2 focus:ring-primary/20 outline-hidden"
+             value={statusFilter}
+             onChange={(e) => setStatusFilter(e.target.value)}
+           >
+             <option value="ALL">All Status</option>
+             <option value="PENDING">Pending</option>
+             <option value="IN_PROGRESS">In Progress</option>
+             <option value="COMPLETED">Completed</option>
+           </select>
+        </div>
+
         {/* Bento Grid / Masonry Layout */}
-        {tasks && tasks.length > 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
+        {filteredTasks && filteredTasks.length > 0 ? (
+          isDragEnabled ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={filteredTasks.map((t) => t.id)}
+              strategy={rectSortingStrategy}
+            >
+              <div
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-auto"
+                style={{
+                  gridAutoFlow: "dense",
+                }}
+              >
+                {filteredTasks.map((task) => (
+                  <TaskCard key={task.id} task={task} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+          ) : (
+            <div
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-auto"
             style={{
-              // Masonry-like effect using CSS Grid
               gridAutoFlow: "dense",
             }}
           >
-            {tasks.map((task, index) => (
-              <motion.div
-                key={task.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05, duration: 0.3 }}
-              >
-                <TaskCard task={task} />
-              </motion.div>
+            {filteredTasks.map((task) => (
+              <TaskCard key={task.id} task={task} />
             ))}
-          </motion.div>
+          </div>
+          )
         ) : (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -191,10 +277,7 @@ export default function DashboardPage() {
                 progress, set priorities, and get things done!
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-linear-to-r from-blue-600 to-purple-600 text-white font-bold shadow-lg hover:shadow-xl hover:shadow-blue-500/20 transition-all hover:scale-105">
-                  <span className="text-xl">+</span>
-                  Create Your First Task
-                </button>
+                <CreateTaskDialog />
               </div>
             </div>
           </motion.div>

@@ -15,4 +15,6 @@ export async function logout() {
     if (typeof window !== "undefined") {
       window.location.href = "/login";
     }
+  }
 }
+
