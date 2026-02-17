@@ -47,13 +47,25 @@ async function bootstrap() {
   // Enable CORS with proper configuration
   app.enableCors({
     origin: (origin, cb) => {
-      // Allow requests from any origin during development (e.g. localhost:3000, localhost:3001)
       const allowedOrigins = [
         'http://localhost:3000',
         'http://localhost:3001',
         'http://127.0.0.1:3000',
         'http://127.0.0.1:3001',
+        'https://twist-list.vercel.app',
       ];
+
+      const corsOrigin = process.env.CORS_ORIGIN;
+      if (corsOrigin) {
+        const productionOrigins = corsOrigin.split(',').map((o) => o.trim());
+        allowedOrigins.push(...productionOrigins);
+      }
+
+      if (origin && origin.endsWith('.vercel.app')) {
+        cb(null, true);
+        return;
+      }
+
       if (!origin || allowedOrigins.includes(origin)) {
         cb(null, true);
         return;
