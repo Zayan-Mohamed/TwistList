@@ -13,8 +13,16 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 
+# Generate Prisma Client
 RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm dlx prisma generate
-RUN pnpm run build
+
+# Build the application
+RUN echo "Starting NestJS build..." && \
+    pnpm run build && \
+    echo "Build completed successfully!" && \
+    ls -la dist/ && \
+    echo "Main file exists:" && \
+    ls -la dist/src/main.js
 
 EXPOSE 8000
 
