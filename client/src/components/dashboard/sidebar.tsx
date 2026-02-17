@@ -1,18 +1,12 @@
 "use client";
 
-import { Bell, CheckSquare, LayoutDashboard, Settings, User as UserIcon, LogOut, Plus, Menu, Briefcase, Users } from "lucide-react";
+import { CheckSquare, LayoutDashboard, Settings, User as UserIcon, LogOut, Menu, Briefcase, Users } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { authApi } from "@/lib/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useUser } from "@/lib/hooks";
@@ -21,14 +15,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const { data: user, isLoading } = useUser();
 
   const handleLogout = async () => {
     try {
       // Clear cookies and redirect
-      document.cookie = "auth_token=; path=/; max-age=0; SameSite=Lax";
+      document.cookie = "auth_token=; path=/; max-age=0; SameSite=none";
       
       // Try backend logout
       await authApi.logout(); 
@@ -38,7 +31,7 @@ export function Sidebar() {
       toast.success("Logged out successfully");
     } catch (error) {
       console.error("Logout failed", error);
-      document.cookie = "auth_token=; path=/; max-age=0; SameSite=Lax";
+      document.cookie = "auth_token=; path=/; max-age=0; SameSite=none";
       window.location.href = "/login?error=unauthorized";
     }
   };

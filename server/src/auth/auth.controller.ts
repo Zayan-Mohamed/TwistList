@@ -34,11 +34,11 @@ export class AuthController {
   async signup(@Body() dto: SignUpDto, @Res() reply: FastifyReply) {
     const result = await this.authService.signup(dto);
 
-    // Set httpOnly cookie
+    // Set httpOnly cookie for cross-domain authentication
     reply.setCookie('auth_token', result.access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true, // Required when sameSite is 'none'
+      sameSite: 'none', // Required for cross-domain (Vercel to Railway)
       maxAge: 86400000, // 24 hours
       path: '/',
     });
@@ -63,11 +63,11 @@ export class AuthController {
   async signin(@Body() dto: SignInDto, @Res() reply: FastifyReply) {
     const result = await this.authService.signin(dto);
 
-    // Set httpOnly cookie
+    // Set httpOnly cookie for cross-domain authentication
     reply.setCookie('auth_token', result.access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true, // Required when sameSite is 'none'
+      sameSite: 'none', // Required for cross-domain (Vercel to Railway)
       maxAge: 86400000, // 24 hours
       path: '/',
     });
@@ -87,8 +87,8 @@ export class AuthController {
     // Clear the httpOnly cookie
     reply.setCookie('auth_token', '', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true, // Required when sameSite is 'none'
+      sameSite: 'none', // Required for cross-domain (Vercel to Railway)
       maxAge: 0,
       path: '/',
     });
