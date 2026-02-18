@@ -79,7 +79,7 @@ export class TeamsController {
   }
 
   @Post(':id/members')
-  @ApiOperation({ summary: 'Add a user to the team' })
+  @ApiOperation({ summary: 'Add a user to the team by username or email' })
   @ApiParam({ name: 'id', description: 'Team ID' })
   @ApiResponse({
     status: 201,
@@ -91,9 +91,9 @@ export class TeamsController {
   addMember(
     @GetUser('userId') userId: number,
     @Param('id', ParseIntPipe) teamId: number,
-    @Body() body: { username: string }, // Updated to use object
+    @Body() body: { usernameOrEmail: string },
   ): Promise<{ message: string }> {
-    return this.teamsService.addMember(userId, teamId, body.username);
+    return this.teamsService.addMember(userId, teamId, body.usernameOrEmail);
   }
 
   @Post('leave')

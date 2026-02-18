@@ -67,6 +67,12 @@ export const authApi = {
   logout: async (): Promise<void> => {
     await apiClient.post("/auth/logout");
   },
+  searchUsers: async (query: string): Promise<User[]> => {
+    const { data } = await apiClient.get<User[]>("/users/search", {
+      params: { q: query },
+    });
+    return data;
+  },
 };
 
 // Tasks API
@@ -131,8 +137,8 @@ export const teamsApi = {
     const { data } = await apiClient.post<Team>("/teams", team);
     return data;
   },
-  addMember: async (teamId: number, username: string): Promise<void> => {
-    await apiClient.post(`/teams/${teamId}/members`, { username });
+  addMember: async (teamId: number, usernameOrEmail: string): Promise<void> => {
+    await apiClient.post(`/teams/${teamId}/members`, { usernameOrEmail });
   },
   leaveTeam: async (): Promise<void> => {
     await apiClient.post(`/teams/leave`);

@@ -183,7 +183,7 @@ export class TeamsService {
   async addMember(
     currentUserId: number,
     teamId: number,
-    usernameToAdd: string,
+    usernameOrEmail: string,
   ): Promise<{ message: string }> {
     // 1. Check if the current user has access to modify this team (e.g., is a member)
     const team = await this.prisma.team.findUnique({
@@ -200,13 +200,15 @@ export class TeamsService {
       throw new ForbiddenException('You are not a member of this team');
     }
 
-    // 2. Find the user to add
-    const userToAdd = await this.prisma.user.findUnique({
-      where: { username: usernameToAdd },
+    // 2. Find the user to add (by username or email)
+    const userToAdd = await this.prisma.user.findFirst({
+      where: {
+        OR: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+      },
     });
 
     if (!userToAdd) {
-      throw new NotFoundException(`User '${usernameToAdd}' not found`);
+      throw new NotFoundException(`User '${usernameOrEmail}' not found`);
     }
 
     // 3. Check if user is already in a team (assuming 1 team per user for now based on schema)

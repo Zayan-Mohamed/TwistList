@@ -7,6 +7,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -71,5 +72,17 @@ export class UsersController {
     @GetUser('userId') userId: number,
   ): Promise<{ message: string }> {
     return this.usersService.deleteAccount(userId);
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search users by username or email' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of matching users',
+    type: [UserResponseDto],
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  searchUsers(@Query('q') query: string): Promise<UserResponseDto[]> {
+    return this.usersService.searchUsers(query);
   }
 }

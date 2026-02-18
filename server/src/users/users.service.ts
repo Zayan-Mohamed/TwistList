@@ -65,4 +65,22 @@ export class UsersService {
 
     return { message: 'Account deleted successfully' };
   }
+
+  async searchUsers(query: string): Promise<UserResponseDto[]> {
+    const users = await this.prisma.user.findMany({
+      where: {
+        OR: [
+          { username: { contains: query, mode: 'insensitive' } },
+          { email: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      take: 10, // Limit to 10 results for autocomplete
+    });
+
+    return users.map((user) =>
+      plainToInstance(UserResponseDto, user, {
+        excludeExtraneousValues: true,
+      }),
+    );
+  }
 }

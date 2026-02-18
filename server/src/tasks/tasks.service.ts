@@ -18,6 +18,18 @@ export class TasksService {
     userId: number,
     createTaskDto: CreateTaskDto,
   ): Promise<TaskResponseDto> {
+    // 0. Validate that user belongs to a team
+    const user = await this.prisma.user.findUnique({
+      where: { userId },
+      select: { teamId: true },
+    });
+
+    if (!user?.teamId) {
+      throw new BadRequestException(
+        'You must belong to a team to create tasks. Please join or create a team first.',
+      );
+    }
+
     // 1. Validate that the project exists
     const project = await this.prisma.project.findUnique({
       where: { id: createTaskDto.projectId },

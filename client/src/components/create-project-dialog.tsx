@@ -17,9 +17,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateProject } from "@/lib/hooks";
+import { useCreateProject, useUser } from "@/lib/hooks";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -33,6 +34,10 @@ type FormValues = z.infer<typeof formSchema>;
 export function CreateProjectDialog() {
   const [open, setOpen] = useState(false);
   const createProject = useCreateProject();
+  const { data: user, isLoading: isLoadingUser } = useUser();
+
+  const hasTeam = user?.teamId !== null && user?.teamId !== undefined;
+  const isDisabled = !hasTeam || isLoadingUser;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -49,8 +54,12 @@ export function CreateProjectDialog() {
     const payload = {
       name: values.name,
       description: values.description || undefined,
-      startDate: values.startDate ? new Date(values.startDate).toISOString() : undefined,
-      endDate: values.endDate ? new Date(values.endDate).toISOString() : undefined,
+      startDate: values.startDate
+        ? new Date(values.startDate).toISOString()
+        : undefined,
+      endDate: values.endDate
+        ? new Date(values.endDate).toISOString()
+        : undefined,
       // Backend DTO allows these to be optional
     };
 
@@ -70,9 +79,22 @@ export function CreateProjectDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(openState) => {
+        if (openState && !hasTeam) {
+          toast.error("Please join or create a team first to create projects");
+          return;
+        }
+        setOpen(openState);
+      }}
+    >
       <DialogTrigger asChild>
-        <Button className="gap-2 bg-linear-to-r from-blue-600 to-purple-600 text-white hover:opacity-90">
+        <Button
+          disabled={isDisabled}
+          className="gap-2 bg-linear-to-r from-blue-600 to-purple-600 text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+          title={!hasTeam ? "Join or create a team first" : ""}
+        >
           <Plus className="h-4 w-4" />
           New Project
         </Button>
@@ -84,6 +106,16 @@ export function CreateProjectDialog() {
             Create a new project to organize your tasks.
           </DialogDescription>
         </DialogHeader>
+        {!hasTeam && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Team Required</AlertTitle>
+            <AlertDescription>
+              You must join or create a team before creating projects. Visit the
+              Teams page to get started.
+            </AlertDescription>
+          </Alert>
+        )}
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="name">Name</Label>
@@ -117,11 +149,7 @@ export function CreateProjectDialog() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="endDate">End Date</Label>
-              <Input
-                id="endDate"
-                type="date"
-                {...form.register("endDate")}
-              />
+              <Input id="endDate" type="date" {...form.register("endDate")} />
             </div>
           </div>
           <DialogFooter>
