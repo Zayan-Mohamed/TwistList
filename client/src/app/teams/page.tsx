@@ -43,6 +43,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import Image from "next/image";
+import { useState } from "react";
 
 export default function TeamsPage() {
   const { data: teams, isLoading } = useTeams();
@@ -52,6 +53,7 @@ export default function TeamsPage() {
   const requestJoin = useRequestJoinTeam();
   const acceptRequest = useAcceptJoinRequest();
   const rejectRequest = useRejectJoinRequest();
+  const [joiningTeamId, setJoiningTeamId] = useState<number | null>(null);
 
   const handleDelete = (id: number) => {
     if (confirm("Are you sure you want to delete this team?")) {
@@ -72,10 +74,16 @@ export default function TeamsPage() {
   };
 
   const handleJoinRequest = (teamId: number) => {
+    setJoiningTeamId(teamId);
     requestJoin.mutate(teamId, {
-      onSuccess: () => toast.success("Join request sent successfully"),
-      onError: (error: any) =>
-        toast.error(error.response?.data?.message || "Failed to send request"),
+      onSuccess: () => {
+        toast.success("Join request sent successfully");
+        setJoiningTeamId(null);
+      },
+      onError: (error: any) => {
+        toast.error(error.response?.data?.message || "Failed to send request");
+        setJoiningTeamId(null);
+      },
     });
   };
 
@@ -130,16 +138,20 @@ export default function TeamsPage() {
                 );
                 const hasPendingRequests =
                   pendingRequests && pendingRequests.length > 0;
-                
+
                 // Check if the current user has a pending request for this team
-                // Since we don't load requests for non-members in findAll unless we change backend, 
+                // Since we don't load requests for non-members in findAll unless we change backend,
                 // we might not know. But the backend findAll implementation DOES include teamRequests.
                 // However, user might see all requests? Ideally only members see requests.
                 // Let's check backend service again.
                 // Backend returns: teamRequests: { where: { status: 'PENDING' }, include: { user: true } }
                 // This means EVERYONE sees pending requests. This is a bit leaky privacy-wise but simple.
-                
-                const myPendingRequest = team.requests?.find(r => r.userId === user?.userId && r.status === RequestStatus.PENDING);
+
+                const myPendingRequest = team.requests?.find(
+                  (r) =>
+                    r.userId === user?.userId &&
+                    r.status === RequestStatus.PENDING,
+                );
 
                 return (
                   <Card
@@ -199,9 +211,19 @@ export default function TeamsPage() {
                                         <div className="flex items-center gap-3">
                                           <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                                             {request.user.profilePictureUrl ? (
-                                                <Image src={request.user.profilePictureUrl} alt="" className="h-8 w-8 rounded-full" />
+                                              <Image
+                                                src={
+                                                  request.user.profilePictureUrl
+                                                }
+                                                alt=""
+                                                className="h-8 w-8 rounded-full"
+                                              />
                                             ) : (
-                                                <span className="text-xs font-medium">{request.user.username.substring(0,2).toUpperCase()}</span>
+                                              <span className="text-xs font-medium">
+                                                {request.user.username
+                                                  .substring(0, 2)
+                                                  .toUpperCase()}
+                                              </span>
                                             )}
                                           </div>
                                           <div>
@@ -251,30 +273,32 @@ export default function TeamsPage() {
                         </div>
                       ) : (
                         <div className="flex flex-col gap-4 mt-auto h-full justify-center text-center text-muted-foreground">
-                            {myPendingRequest ? (
-                                <div className="flex flex-col items-center gap-2 text-orange-600 dark:text-orange-400">
-                                    <MailQuestion className="h-8 w-8" />
-                                    <p className="font-medium">Request Sent</p>
-                                    <p className="text-xs text-muted-foreground">Waiting for approval...</p>
-                                </div>
-                            ) : (
-                                <>
-                                <p className="text-sm">
-                                    You are not a member of this team.
-                                </p>
-                                <Button
-                                    className="w-full gap-2 mt-2"
-                                    variant="outline"
-                                    onClick={() => handleJoinRequest(team.id)}
-                                    disabled={requestJoin.isPending}
-                                >
-                                    <Hand className="h-4 w-4" />
-                                    {requestJoin.isPending
-                                    ? "Sending..."
-                                    : "Request to Join"}
-                                </Button>
-                                </>
-                            )}
+                          {myPendingRequest ? (
+                            <div className="flex flex-col items-center gap-2 text-orange-600 dark:text-orange-400">
+                              <MailQuestion className="h-8 w-8" />
+                              <p className="font-medium">Request Sent</p>
+                              <p className="text-xs text-muted-foreground">
+                                Waiting for approval...
+                              </p>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="text-sm">
+                                You are not a member of this team.
+                              </p>
+                              <Button
+                                className="w-full gap-2 mt-2"
+                                variant="outline"
+                                onClick={() => handleJoinRequest(team.id)}
+                                disabled={joiningTeamId === team.id}
+                              >
+                                <Hand className="h-4 w-4" />
+                                {joiningTeamId === team.id
+                                  ? "Sending..."
+                                  : "Request to Join"}
+                              </Button>
+                            </>
+                          )}
                         </div>
                       )}
                     </CardContent>
@@ -320,5 +344,3 @@ export default function TeamsPage() {
     </DashboardLayout>
   );
 }
-
-
