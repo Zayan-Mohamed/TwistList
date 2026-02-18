@@ -42,8 +42,8 @@ export class TeamsService {
       return {
         id: team.id,
         teamName: team.teamName,
-        productOwnerUserId: team.productOwnerUserId,
-        projectManagerUserId: team.projectManagerUserId,
+        productOwnerUserId: team.productOwnerUserId ?? undefined,
+        projectManagerUserId: team.projectManagerUserId ?? undefined,
       };
     } catch (error) {
       console.error('Error creating team:', error);
@@ -67,8 +67,8 @@ export class TeamsService {
       return teams.map((team) => ({
         id: team.id,
         teamName: team.teamName,
-        productOwnerUserId: team.productOwnerUserId,
-        projectManagerUserId: team.projectManagerUserId,
+        productOwnerUserId: team.productOwnerUserId ?? undefined,
+        projectManagerUserId: team.projectManagerUserId ?? undefined,
       }));
     } catch (error) {
       console.error('Error in findAll teams:', error);
@@ -116,9 +116,15 @@ export class TeamsService {
       return {
         id: team.id,
         teamName: team.teamName,
-        productOwnerUserId: team.productOwnerUserId,
-        projectManagerUserId: team.projectManagerUserId,
-        users: team.user,
+        productOwnerUserId: team.productOwnerUserId ?? undefined,
+        projectManagerUserId: team.projectManagerUserId ?? undefined,
+        users: team.user.map((u) => ({
+          userId: u.userId,
+          username: u.username,
+          email: u.email,
+          profilePictureUrl: u.profilePictureUrl ?? undefined,
+          teamId: u.teamId ?? undefined,
+        })),
       };
     } catch (error) {
       console.error('Error in findOne team:', error);
@@ -233,8 +239,8 @@ export class TeamsService {
       return {
         id: updatedTeam.id,
         teamName: updatedTeam.teamName,
-        productOwnerUserId: updatedTeam.productOwnerUserId,
-        projectManagerUserId: updatedTeam.projectManagerUserId,
+        productOwnerUserId: updatedTeam.productOwnerUserId ?? undefined,
+        projectManagerUserId: updatedTeam.projectManagerUserId ?? undefined,
       };
     } catch (error) {
       console.error('Error updating team:', error);

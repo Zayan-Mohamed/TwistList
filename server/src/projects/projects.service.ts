@@ -39,9 +39,7 @@ export class ProjectsService {
       });
 
       if (!team) {
-        throw new BadRequestException(
-          `Team with ID ${teamIdToUse} not found`,
-        );
+        throw new BadRequestException(`Team with ID ${teamIdToUse} not found`);
       }
 
       // Create project and link to team

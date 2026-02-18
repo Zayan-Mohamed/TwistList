@@ -35,19 +35,20 @@ TwistList is a secure, full-stack task management application demonstrating ente
 
 ### 🏆 Assessment Criteria Coverage
 
-| Category | Implementation | Score Target |
-|----------|---------------|--------------|
-| **Security** | JWT Auth, Argon2, Rate Limiting, CORS, Helmet, Input Validation | 20% |
-| **Code Quality** | TypeScript, Modular Architecture, Design Patterns, Clean Code | 30% |
-| **Brainstorm & Soft Skills** | Documented in PLAN.md, Clear commits, Problem-solving | 20% |
-| **UI/UX** | Responsive Design, Framer Motion, Command Palette, Optimistic UI | 20% |
-| **Deployment** | Railway + Vercel, Docker, CI/CD, Environment Management | 10% |
+| Category                     | Implementation                                                   | Score Target |
+| ---------------------------- | ---------------------------------------------------------------- | ------------ |
+| **Security**                 | JWT Auth, Argon2, Rate Limiting, CORS, Helmet, Input Validation  | 20%          |
+| **Code Quality**             | TypeScript, Modular Architecture, Design Patterns, Clean Code    | 30%          |
+| **Brainstorm & Soft Skills** | Documented in PLAN.md, Clear commits, Problem-solving            | 20%          |
+| **UI/UX**                    | Responsive Design, Framer Motion, Command Palette, Optimistic UI | 20%          |
+| **Deployment**               | Railway + Vercel, Docker, CI/CD, Environment Management          | 10%          |
 
 ---
 
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **Framework:** Next.js 14 (App Router)
 - **Language:** TypeScript (Strict Mode)
 - **Styling:** Tailwind CSS + shadcn/ui
@@ -57,6 +58,7 @@ TwistList is a secure, full-stack task management application demonstrating ente
 - **HTTP Client:** Axios with interceptors
 
 ### Backend
+
 - **Framework:** NestJS with Fastify adapter
 - **Language:** TypeScript
 - **Database:** PostgreSQL
@@ -67,6 +69,7 @@ TwistList is a secure, full-stack task management application demonstrating ente
 - **Security:** Helmet, CORS, Rate Limiting (@nestjs/throttler)
 
 ### DevOps & Deployment
+
 - **Frontend Hosting:** Vercel
 - **Backend Hosting:** Railway
 - **Database:** Railway PostgreSQL
@@ -110,12 +113,14 @@ TwistList is a secure, full-stack task management application demonstrating ente
 ### Deployment Architecture
 
 **Frontend (Vercel):**
+
 - Static site generation for public pages
 - Server-side rendering for authenticated routes
 - API proxy to avoid CORS issues
 - Automatic deployments on `git push`
 
 **Backend (Railway):**
+
 - Dockerized NestJS application
 - PostgreSQL database (managed by Railway)
 - Automatic migrations on deploy
@@ -128,17 +133,20 @@ TwistList is a secure, full-stack task management application demonstrating ente
 ### 1. Authentication & Authorization
 
 **JWT-based Authentication:**
+
 - Access tokens stored in **HttpOnly cookies** (prevents XSS attacks)
 - `sameSite: 'none'` with `secure: true` for cross-origin (Vercel ↔ Railway)
 - 15-minute token expiration
 - Automatic token extraction from cookies or Authorization header
 
 **Password Security:**
+
 - Argon2 hashing (OWASP recommended, GPU-resistant)
 - Password complexity requirements enforced client and server-side
 - No plaintext passwords in logs or responses
 
 **Example Implementation:**
+
 ```typescript
 // server/src/auth/auth.service.ts
 const hash = await argon.hash(dto.password);
@@ -163,11 +171,13 @@ async deleteTask(taskId: number, userId: number) {
 ### 3. Input Validation
 
 **Backend (NestJS):**
+
 - `ValidationPipe` with `whitelist: true` (strips unknown properties)
 - `forbidNonWhitelisted: true` (throws error on extra fields)
 - DTO classes with decorators: `@IsEmail()`, `@MinLength()`, `@IsEnum()`
 
 **Frontend (Next.js):**
+
 - Zod schemas for all forms
 - React Hook Form integration
 - Real-time validation feedback
@@ -175,6 +185,7 @@ async deleteTask(taskId: number, userId: number) {
 ### 4. Rate Limiting
 
 Protects against brute-force attacks:
+
 - **Login:** 5 requests per minute per IP
 - **Registration:** 3 requests per minute per IP
 - **Global:** 100 requests per 15 minutes
@@ -188,17 +199,20 @@ async signin(@Body() dto: SignInDto) { ... }
 ### 5. Infrastructure Security
 
 **HTTP Headers (Helmet):**
+
 - Content Security Policy (CSP)
 - X-Frame-Options: DENY
 - X-Content-Type-Options: nosniff
 - Strict-Transport-Security (HSTS)
 
 **CORS Configuration:**
+
 - Whitelist of allowed origins
 - Credentials enabled for cookie transmission
 - Dynamic origin validation
 
 **Trust Proxy:**
+
 - Configured for Railway reverse proxy
 - Ensures correct HTTPS detection for secure cookies
 
@@ -213,12 +227,14 @@ async signin(@Body() dto: SignInDto) { ... }
 ## ✨ Key Features
 
 ### 1. Authentication System
+
 - User registration with validation
 - Secure login with JWT tokens
 - Protected routes with automatic redirection
 - Logout with cookie cleanup
 
 ### 2. Task Management
+
 - **CRUD operations:** Create, Read, Update, Delete tasks
 - **Task properties:**
   - Title, description
@@ -229,6 +245,7 @@ async signin(@Body() dto: SignInDto) { ... }
 - **Optimistic UI updates:** Instant feedback before API response
 
 ### 3. Advanced UI/UX
+
 - **Responsive Design:** Mobile-first approach, works on all devices
 - **Bento Grid Layout:** Modern masonry card layout (not a basic table)
 - **Command Palette:** Global search with `Cmd+K` / `Ctrl+K`
@@ -237,12 +254,14 @@ async signin(@Body() dto: SignInDto) { ... }
 - **Toast Notifications:** Real-time feedback for all actions
 
 ### 4. Team Collaboration
+
 - Team creation and management
 - Member invitations
 - Project organization
 - Gantt chart visualization (projects)
 
 ### 5. User Profile
+
 - Avatar upload
 - Profile editing
 - Password change
@@ -253,6 +272,7 @@ async signin(@Body() dto: SignInDto) { ... }
 ## 🚀 Setup & Installation
 
 ### Prerequisites
+
 - Node.js 18+ (LTS recommended)
 - pnpm 8+ (or npm/yarn)
 - PostgreSQL 14+
@@ -261,6 +281,7 @@ async signin(@Body() dto: SignInDto) { ... }
 ### Local Development Setup
 
 #### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/Zayan-Mohamed/TwistList.git
 cd TwistList
@@ -320,6 +341,7 @@ pnpm run dev
 Open [http://localhost:3001](http://localhost:3001) in your browser.
 
 **Test Credentials (if seeded):**
+
 - Email: `test@example.com`
 - Password: `password123`
 
@@ -330,6 +352,7 @@ Open [http://localhost:3001](http://localhost:3001) in your browser.
 ### Architecture Overview
 
 **Production URLs:**
+
 - **Frontend:** https://twist-list.vercel.app
 - **Backend:** https://twistlist-production.up.railway.app
 - **Database:** Railway PostgreSQL (managed)
@@ -415,6 +438,7 @@ vercel --prod
 6. Deploy!
 
 **Why use Vercel proxy?**
+
 - Cookies work properly (same-origin)
 - No CORS issues
 - Better performance
@@ -435,6 +459,7 @@ vercel --prod
 ### Swagger UI
 
 Once the backend is running, access interactive API documentation:
+
 - **Local:** http://localhost:3000/api
 - **Production:** https://twistlist-production.up.railway.app/api
 
@@ -489,6 +514,7 @@ POST   /teams/:id/members # Add team member
 ### Request/Response Examples
 
 **Create Task:**
+
 ```bash
 curl -X POST https://twist-list.vercel.app/api/tasks \
   -H "Content-Type: application/json" \
@@ -503,6 +529,7 @@ curl -X POST https://twist-list.vercel.app/api/tasks \
 ```
 
 **Response:**
+
 ```json
 {
   "id": 1,
@@ -642,18 +669,18 @@ git log --oneline --graph
 
 ### ✅ OWASP Top 10 Compliance
 
-| Vulnerability | Mitigation |
-|---------------|------------|
-| A01: Broken Access Control | IDOR protection on all endpoints |
-| A02: Cryptographic Failures | Argon2 for passwords, HTTPS only |
-| A03: Injection | Prisma ORM prevents SQL injection |
-| A04: Insecure Design | Security-first architecture |
-| A05: Security Misconfiguration | Helmet, CORS, CSP configured |
-| A06: Vulnerable Components | Regular dependency updates |
-| A07: Authentication Failures | JWT + secure cookies + rate limiting |
-| A08: Software Integrity Failures | Git commit verification |
-| A09: Logging Failures | Structured logging (production) |
-| A10: SSRF | Input validation on all URLs |
+| Vulnerability                    | Mitigation                           |
+| -------------------------------- | ------------------------------------ |
+| A01: Broken Access Control       | IDOR protection on all endpoints     |
+| A02: Cryptographic Failures      | Argon2 for passwords, HTTPS only     |
+| A03: Injection                   | Prisma ORM prevents SQL injection    |
+| A04: Insecure Design             | Security-first architecture          |
+| A05: Security Misconfiguration   | Helmet, CORS, CSP configured         |
+| A06: Vulnerable Components       | Regular dependency updates           |
+| A07: Authentication Failures     | JWT + secure cookies + rate limiting |
+| A08: Software Integrity Failures | Git commit verification              |
+| A09: Logging Failures            | Structured logging (production)      |
+| A10: SSRF                        | Input validation on all URLs         |
 
 ---
 
@@ -712,6 +739,7 @@ This project is created for the TwistDigital technical assessment.
 ## 👤 Author
 
 **Zayan Mohamed**
+
 - GitHub: [@Zayan-Mohamed](https://github.com/Zayan-Mohamed)
 - Project: [TwistList](https://github.com/Zayan-Mohamed/TwistList)
 
@@ -720,6 +748,7 @@ This project is created for the TwistDigital technical assessment.
 ## 🎓 Assessment Notes
 
 ### What Went Well
+
 - ✅ Comprehensive security implementation (Argon2, JWT, IDOR protection)
 - ✅ Clean, modular architecture (NestJS modules, Next.js app router)
 - ✅ Type-safe development across the stack
@@ -727,12 +756,14 @@ This project is created for the TwistDigital technical assessment.
 - ✅ Detailed documentation and clear commit history
 
 ### Challenges Overcome
+
 - Cross-origin cookie authentication (solved with Vercel proxy)
 - Railway reverse proxy configuration (trustProxy: true)
 - Optimistic UI updates with React Query
 - Prisma 7 configuration for Railway deployment
 
 ### Future Improvements
+
 - Implement refresh tokens for longer sessions
 - Add WebSocket support for real-time collaboration
 - Implement AI-assisted task breakdown feature
@@ -744,6 +775,7 @@ This project is created for the TwistDigital technical assessment.
 ## 📞 Support
 
 For questions about this assessment submission:
+
 - **Email:** Contact through GitHub profile
 - **Issues:** [GitHub Issues](https://github.com/Zayan-Mohamed/TwistList/issues)
 

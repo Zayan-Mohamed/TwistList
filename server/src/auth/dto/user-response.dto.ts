@@ -23,5 +23,5 @@ export class UserResponseDto {
   teamId?: number;
 
   @Exclude()
-  password: string;
+  password?: string;
 }

@@ -42,6 +42,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import Image from "next/image";
 
 export default function TeamsPage() {
   const { data: teams, isLoading } = useTeams();
@@ -198,7 +199,7 @@ export default function TeamsPage() {
                                         <div className="flex items-center gap-3">
                                           <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                                             {request.user.profilePictureUrl ? (
-                                                <img src={request.user.profilePictureUrl} alt="" className="h-8 w-8 rounded-full" />
+                                                <Image src={request.user.profilePictureUrl} alt="" className="h-8 w-8 rounded-full" />
                                             ) : (
                                                 <span className="text-xs font-medium">{request.user.username.substring(0,2).toUpperCase()}</span>
                                             )}
