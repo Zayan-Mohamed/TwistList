@@ -44,20 +44,43 @@ export class TeamsService {
   }
 
   async findAll(userId: number): Promise<TeamResponseDto[]> {
-    // Return all teams with their pending requests
-    const teams = await this.prisma.team.findMany({
-      include: {
-        user: true,
-        teamRequests: {
+    try {
+      // Return all teams - simplified to avoid circular references
+      const teams = await this.prisma.team.findMany({
+        include: {
+          user: {
+            select: {
+              userId: true,
+              username: true,
+              email: true,
+              profilePictureUrl: true,
+              teamId: true,
+            }
+          },
+          teamRequests: {
             where: { status: 'PENDING' },
-            include: { user: true }
-        }
-      },
-    });
+            include: { 
+              user: {
+                select: {
+                  userId: true,
+                  username: true,
+                  email: true,
+                  profilePictureUrl: true,
+                  teamId: true,
+                }
+              }
+            }
+          }
+        },
+      });
 
-    return plainToInstance(TeamResponseDto, teams, {
-      excludeExtraneousValues: true,
-    });
+      return plainToInstance(TeamResponseDto, teams, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      console.error('Error in findAll teams:', error);
+      throw error;
+    }
   }
 
   async findOne(userId: number, teamId: number): Promise<TeamResponseDto> {

@@ -18,49 +18,65 @@ export class ProjectsService {
     userId: number,
     createProjectDto: CreateProjectDto,
   ): Promise<ProjectResponseDto> {
-    // Get user's current team
-    const user = await this.prisma.user.findUnique({
-      where: { userId },
-      select: { teamId: true },
-    });
+    try {
+      // Get user's current team
+      const user = await this.prisma.user.findUnique({
+        where: { userId },
+        select: { teamId: true },
+      });
 
-    const teamIdToUse = createProjectDto.teamId || user?.teamId;
+      const teamIdToUse = createProjectDto.teamId || user?.teamId;
 
-    if (!teamIdToUse) {
-      throw new BadRequestException(
-        'You must belong to a team or specify a team ID to create a project. Please create a team first.',
-      );
+      if (!teamIdToUse) {
+        throw new BadRequestException(
+          'You must belong to a team to create a project. Please join or create a team first.',
+        );
+      }
+
+      // Verify team exists
+      const team = await this.prisma.team.findUnique({
+        where: { id: teamIdToUse },
+      });
+
+      if (!team) {
+        throw new BadRequestException(
+          `Team with ID ${teamIdToUse} not found`,
+        );
+      }
+
+      // Create project and link to team
+      const project = await this.prisma.$transaction(async (tx) => {
+        const newProject = await tx.project.create({
+          data: {
+            name: createProjectDto.name,
+            description: createProjectDto.description,
+            startDate: createProjectDto.startDate
+              ? new Date(createProjectDto.startDate)
+              : undefined,
+            endDate: createProjectDto.endDate
+              ? new Date(createProjectDto.endDate)
+              : undefined,
+          },
+        });
+
+        // Link team to project
+        await tx.projectTeam.create({
+          data: {
+            teamId: teamIdToUse,
+            projectId: newProject.id,
+          },
+        });
+
+        return newProject;
+      });
+
+      return plainToInstance(ProjectResponseDto, project, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      console.error('Error creating project:', error);
+      throw error;
     }
-
-    // Create project and link to team
-    const project = await this.prisma.$transaction(async (tx) => {
-      const newProject = await tx.project.create({
-        data: {
-          name: createProjectDto.name,
-          description: createProjectDto.description,
-          startDate: createProjectDto.startDate
-            ? new Date(createProjectDto.startDate)
-            : undefined,
-          endDate: createProjectDto.endDate
-            ? new Date(createProjectDto.endDate)
-            : undefined,
-        },
-      });
-
-      // Link team to project
-      await tx.projectTeam.create({
-        data: {
-          teamId: teamIdToUse,
-          projectId: newProject.id,
-        },
-      });
-
-      return newProject;
-    });
-
-    return plainToInstance(ProjectResponseDto, project, {
-      excludeExtraneousValues: true,
-    });
   }
 
   async findAll(userId: number): Promise<ProjectResponseDto[]> {
