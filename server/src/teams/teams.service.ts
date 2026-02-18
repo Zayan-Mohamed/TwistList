@@ -68,29 +68,10 @@ export class TeamsService {
               teamId: true,
             },
           },
-          teamRequests: {
-            where: { status: 'PENDING' },
-            select: {
-              id: true,
-              teamId: true,
-              userId: true,
-              status: true,
-              createdAt: true,
-              user: {
-                select: {
-                  userId: true,
-                  username: true,
-                  email: true,
-                  profilePictureUrl: true,
-                  teamId: true,
-                },
-              },
-            },
-          },
         },
       });
 
-      // Return teams with membership and request info
+      // Return teams with membership info (requests will be added once migration runs)
       return teams.map((team) => ({
         id: team.id,
         teamName: team.teamName,
@@ -103,20 +84,7 @@ export class TeamsService {
           profilePictureUrl: u.profilePictureUrl ?? undefined,
           teamId: u.teamId ?? undefined,
         })),
-        requests: team.teamRequests.map((r) => ({
-          id: r.id,
-          teamId: r.teamId,
-          userId: r.userId,
-          status: r.status as RequestStatus,
-          createdAt: r.createdAt,
-          user: {
-            userId: r.user.userId,
-            username: r.user.username,
-            email: r.user.email,
-            profilePictureUrl: r.user.profilePictureUrl ?? undefined,
-            teamId: r.user.teamId ?? undefined,
-          },
-        })),
+        requests: [], // Temporarily empty until TeamRequest table is created
       }));
     } catch (error) {
       console.error('Error in findAll teams:', error);
