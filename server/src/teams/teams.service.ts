@@ -53,8 +53,15 @@ export class TeamsService {
 
   async findAll(userId: number): Promise<TeamResponseDto[]> {
     try {
-      // Fetch all teams without nested includes to avoid serialization issues
+      // Fetch teams where the user is a member
       const teams = await this.prisma.team.findMany({
+        where: {
+          user: {
+            some: {
+              userId: userId,
+            },
+          },
+        },
         select: {
           id: true,
           teamName: true,

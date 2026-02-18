@@ -105,9 +105,7 @@ export class TeamsController {
     schema: { example: { message: 'Left team successfully' } },
   })
   @ApiResponse({ status: 404, description: 'User not found' })
-  leaveTeam(
-    @GetUser('userId') userId: number,
-  ): Promise<{ message: string }> {
+  leaveTeam(@GetUser('userId') userId: number): Promise<{ message: string }> {
     return this.teamsService.leaveTeam(userId);
   }
 
