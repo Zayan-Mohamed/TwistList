@@ -9,11 +9,9 @@ import {
   User,
 } from "@/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-
-if (!API_BASE_URL.startsWith("http")) {
-  console.warn("API_BASE_URL does not start with http:", API_BASE_URL);
-}
+// IMPORTANT: Always use /api for Vercel proxy
+// This ensures cookies work properly in production
+const API_BASE_URL = "/api";
 
 // Create Axios instance with default config
 export const apiClient = axios.create({
@@ -29,13 +27,11 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // We cannot clear httpOnly cookies from client-side JS.
-      // We should redirect to login with a special parameter so middleware knows to clear the token.
+      // Redirect to login on unauthorized
       if (typeof window !== "undefined") {
-         // Use error=unauthorized to signal middleware to drop the cookie
-         if (!window.location.pathname.startsWith('/login')) {
-             window.location.href = "/login?error=unauthorized";
-         }
+        if (!window.location.pathname.startsWith("/login")) {
+          window.location.href = "/login?error=unauthorized";
+        }
       }
     }
     return Promise.reject(error);
@@ -62,7 +58,9 @@ export const authApi = {
     const { data } = await apiClient.get<User>("/users/profile");
     return { user: data };
   },
-  updateProfile: async (updates: Partial<User> & { password?: string }): Promise<{ user: User }> => {
+  updateProfile: async (
+    updates: Partial<User> & { password?: string },
+  ): Promise<{ user: User }> => {
     const { data } = await apiClient.patch<User>("/users/profile", updates);
     return { user: data };
   },
@@ -95,11 +93,12 @@ export const tasksApi = {
   deleteTask: async (id: number): Promise<void> => {
     await apiClient.delete(`/tasks/${id}`);
   },
-  reorderTasks: async (positions: { id: number; position: number }[]): Promise<void> => {
+  reorderTasks: async (
+    positions: { id: number; position: number }[],
+  ): Promise<void> => {
     await apiClient.patch("/tasks/reorder", { positions });
   },
 };
-
 
 // Projects API
 export const projectsApi = {
@@ -111,7 +110,9 @@ export const projectsApi = {
     const { data } = await apiClient.get<Project>(`/projects/${id}`);
     return data;
   },
-  createProject: async (project: Partial<Project> & { teamId?: number }): Promise<Project> => {
+  createProject: async (
+    project: Partial<Project> & { teamId?: number },
+  ): Promise<Project> => {
     const { data } = await apiClient.post<Project>("/projects", project);
     return data;
   },
@@ -148,27 +149,4 @@ export const teamsApi = {
   rejectRequest: async (teamId: number, requestId: number): Promise<void> => {
     await apiClient.post(`/teams/${teamId}/requests/${requestId}/reject`);
   },
-};
-
-
-// Helper to store token
-export const setAuthToken = (token: string) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("authToken", token);
-  }
-};
-
-// Helper to get token
-export const getAuthToken = (): string | null => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("authToken");
-  }
-  return null;
-};
-
-// Helper to remove token
-export const removeAuthToken = () => {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("authToken");
-  }
 };

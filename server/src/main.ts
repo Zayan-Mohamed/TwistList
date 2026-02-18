@@ -12,7 +12,9 @@ import cookie from '@fastify/cookie';
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter(),
+    new FastifyAdapter({
+      trustProxy: true, // Critical for Railway/Railway-like deployments behind a proxy
+    }),
   );
 
   // Register cookie plugin

@@ -37,11 +37,10 @@ export class AuthController {
     // Set httpOnly cookie for cross-domain authentication
     reply.setCookie('auth_token', result.access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 86400000,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 86400000, // 24 hours
       path: '/',
-      domain: process.env.COOKIE_DOMAIN || undefined,
     });
 
     return reply.send({ message: 'User successfully registered' });
@@ -67,11 +66,10 @@ export class AuthController {
     // Set httpOnly cookie for cross-domain authentication
     reply.setCookie('auth_token', result.access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: 86400000, // 24 hours
       path: '/',
-      domain: process.env.COOKIE_DOMAIN || undefined,
     });
 
     // Still return access_token in response for compatibility
@@ -89,11 +87,10 @@ export class AuthController {
     // Clear the httpOnly cookie
     reply.setCookie('auth_token', '', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: true, // Must match the original cookie settings
+      sameSite: 'none', // Must match the original cookie settings
       maxAge: 0,
       path: '/',
-      domain: process.env.COOKIE_DOMAIN || undefined,
     });
 
     return reply.send({ message: 'Logged out successfully' });
